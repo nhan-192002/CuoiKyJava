@@ -14,10 +14,12 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
@@ -68,6 +70,38 @@ public class MainScreen extends JFrame implements ActionListener{
     }
     @Override
     public void actionPerformed(ActionEvent e) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if(!isSocketOpened){
+            try {
+                if(serverNameText.getText().isEmpty()){
+                    JOptionPane.showMessageDialog(this, "ten server khong duoc trong", "error", JOptionPane.WARNING_MESSAGE);
+                }
+                else if(portText.getText().isEmpty()){
+                    JOptionPane.showMessageDialog(this, "Port khong duoc trong", "Error", JOptionPane.WARNING_MESSAGE);
+                }
+                else{
+                    Main.socketController.serverName = serverNameText.getText();
+                    Main.socketController.serverPort = Integer.parseInt(portText.getText());
+                    
+                    Main.socketController.OpenSocket(Main.socketController.serverPort);
+                    isSocketOpened = true;
+                    openCloseButton.setText("Dong server");
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Port phai la mot so nguyen duong", "Error", JOptionPane.WARNING_MESSAGE);
+            }
+        }
+        else{
+            Main.socketController.CloseSocket();
+            isSocketOpened = false;
+            openCloseButton.setText("mo server");
+        }
+    }
+    public void updateClientTable(){
+        Object[][] tableContent = new Object[Main.socketController.connectedClient.size()][2];
+        for(int i =0; i<Main.socketController.connectedClient.size();i++){
+            tableContent[i][0] = Main.socketController.connectedClient.get(i).userName;
+            tableContent[i][1] = Main.socketController.connectedClient.get(i).port;
+        }
+        clientTable.setModel(new DefaultTableModel(tableContent, new String[]{"Ten client","Port client"}));
     }
 }
