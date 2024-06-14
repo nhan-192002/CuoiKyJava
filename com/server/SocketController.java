@@ -6,6 +6,7 @@
 package com.server;
 
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,8 +24,26 @@ public class SocketController {
         try {
             s = new ServerSocket(port);
             connectedClient = new ArrayList<Client>();
+            allRooms = new ArrayList<Room>();
+            new Thread(() -> {
+                try {
+                    do{
+                        System.out.println("Waiting for client");
+                        Socket clientSocket= s.accept();
+                        ClientCommunicateThread clientCommunicator = new ClientCommunicateThread(clientSocket);
+			clientCommunicator.start();
+                    }
+                    while (s != null && !s.isClosed());
+                } catch (Exception e) {
+                    System.out.println("Server or client socket closed");
+                }
+            }).start();
         } catch (Exception e) {
         }
 
+    }
+
+    void CloseSocket() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }
