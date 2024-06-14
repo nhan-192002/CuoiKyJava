@@ -1,4 +1,4 @@
-package client;
+package chatclient;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -30,82 +30,7 @@ public class MainScreen extends JFrame implements ActionListener {
 	JTextArea messageArea;
 
 	public MainScreen() {
-		GBCBuilder gbc = new GBCBuilder(1, 1);
-		JPanel mainContent = new JPanel(new GridBagLayout());
-
-		connectedServerInfoJList = new JList<String>(new String[] { "IP: " + Main.socketController.connectedServer.ip,
-				"Port: " + Main.socketController.connectedServer.port,
-				"Số user online: " + Main.socketController.connectedServer.connectAccountCount });
-
-		connectedServerInfoJList.setBorder(BorderFactory
-				.createTitledBorder(String.format("Server %s (%s)", Main.connectServerScreen.connectedServer.nickName,
-						SocketController.serverName(Main.socketController.connectedServer.ip,
-								Main.socketController.connectedServer.port))));
-
-		onlineUserJList = new JList<String>();
-		onlineUserJList.addMouseListener(new MouseAdapter() {
-			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2) {
-
-					String clickedUser = onlineUserJList.getSelectedValue();
-					System.out.println("Double click " + clickedUser);
-					Room foundRoom = Room.findPrivateRoom(Main.socketController.allRooms, clickedUser);
-					if (foundRoom == null) {
-						Main.socketController.createPrivateRoom(clickedUser);
-					} else {
-						int roomTabIndex = -1;
-						for (int i = 0; i < roomTabbedPane.getTabCount(); i++) {
-							JScrollPane currentScrollPane = (JScrollPane) roomTabbedPane.getComponentAt(i);
-							RoomMessagesPanel currentRoomMessagePanel = (RoomMessagesPanel) currentScrollPane
-									.getViewport().getView();
-							if (currentRoomMessagePanel.room.id == foundRoom.id) {
-								roomTabIndex = i;
-								break;
-							}
-						}
-
-						if (roomTabIndex == -1) { // room tồn tại nhưng tab bị chéo trước đó
-							newRoomTab(foundRoom);
-							roomTabbedPane.setSelectedIndex(roomTabbedPane.getTabCount() - 1);
-						} else {
-							roomTabbedPane.setSelectedIndex(roomTabIndex);
-						}
-					}
-				}
-			}
-		});
-		JScrollPane onlineUserScrollPane = new JScrollPane(onlineUserJList);
-		onlineUserScrollPane.setBorder(BorderFactory.createTitledBorder("Danh sách user đang online"));
-
-		groupJList = new JList<String>();
-		groupJList.addMouseListener(new MouseAdapter() {
-			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2) {
-
-					String clickedGroup = groupJList.getSelectedValue();
-					System.out.println("Double click " + clickedGroup);
-					Room foundRoom = Room.findGroup(Main.socketController.allRooms, clickedGroup);
-
-					int roomTabIndex = -1;
-					for (int i = 0; i < roomTabbedPane.getTabCount(); i++) {
-						JScrollPane currentScrollPane = (JScrollPane) roomTabbedPane.getComponentAt(i);
-						RoomMessagesPanel currentRoomMessagePanel = (RoomMessagesPanel) currentScrollPane.getViewport()
-								.getView();
-						if (currentRoomMessagePanel.room.id == foundRoom.id) {
-							roomTabIndex = i;
-							break;
-						}
-					}
-
-					if (roomTabIndex == -1) { // room tồn tại nhưng tab bị chéo trước đó
-						newRoomTab(foundRoom);
-						roomTabbedPane.setSelectedIndex(roomTabbedPane.getTabCount() - 1);
-					} else {
-						roomTabbedPane.setSelectedIndex(roomTabIndex);
-					}
-				}
-			}
-		});
+		
 		JScrollPane groupListScrollPane = new JScrollPane(groupJList);
 		groupListScrollPane.setBorder(BorderFactory.createTitledBorder("Danh sách group"));
 
@@ -114,15 +39,6 @@ public class MainScreen extends JFrame implements ActionListener {
 		createGroupButton.addActionListener(this);
 
 		JPanel groupPanel = new JPanel(new GridBagLayout());
-		groupPanel.add(groupListScrollPane, gbc.setGrid(1, 1).setFill(GridBagConstraints.BOTH).setWeight(1, 1));
-		groupPanel.add(createGroupButton, gbc.setGrid(1, 2).setWeight(1, 0));
-
-		JSplitPane chatSubjectSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, onlineUserScrollPane, groupPanel);
-		chatSubjectSplitPane.setDividerLocation(230);
-
-		JPanel leftPanel = new JPanel(new GridBagLayout());
-		leftPanel.add(connectedServerInfoJList, gbc.setGrid(1, 1).setWeight(1, 0).setFill(GridBagConstraints.BOTH));
-		leftPanel.add(chatSubjectSplitPane, gbc.setGrid(1, 2).setWeight(1, 1));
 
 		JPanel chatPanel = new JPanel(new GridBagLayout());
 		enterMessagePanel = new JPanel(new GridBagLayout());
@@ -137,9 +53,6 @@ public class MainScreen extends JFrame implements ActionListener {
 		emojiButton.setActionCommand("emoji");
 		emojiButton.addActionListener(this);
 
-		fileButton = new JButton(Main.getScaledImage("/fileIcon.png", 16, 16));
-		fileButton.setActionCommand("file");
-		fileButton.addActionListener(this);
 
 //		audioButton = new AudioButton();
 
@@ -158,11 +71,6 @@ public class MainScreen extends JFrame implements ActionListener {
 			}
 		});
 
-		enterMessagePanel.add(messageArea, gbc.setGrid(1, 1).setWeight(1, 1));
-		enterMessagePanel.add(sendButton,
-				gbc.setGrid(2, 1).setWeight(0, 0).setFill(GridBagConstraints.NONE).setAnchor(GridBagConstraints.NORTH));
-		enterMessagePanel.add(emojiButton, gbc.setGrid(3, 1));
-		enterMessagePanel.add(fileButton, gbc.setGrid(4, 1));
 //		enterMessagePanel.add(audioButton, gbc.setGrid(5, 1));
 
 		roomTabbedPane = new JTabbedPane();
@@ -173,7 +81,6 @@ public class MainScreen extends JFrame implements ActionListener {
 				JScrollPane selectedTab = (JScrollPane) roomTabbedPane.getSelectedComponent();
 				if (selectedTab != null) {
 					RoomMessagesPanel selectedMessagePanel = (RoomMessagesPanel) selectedTab.getViewport().getView();
-					chattingRoom = selectedMessagePanel.room.id;
 					updateRoomUsersJList();
 				}
 			}
@@ -182,102 +89,34 @@ public class MainScreen extends JFrame implements ActionListener {
 		roomUsersJList = new JList<String>();
 		roomUsersJList.setBorder(BorderFactory.createTitledBorder("User trong room hiện tại"));
 
-		chatPanel.setBackground(Color.white);
-		chatPanel.add(roomTabbedPane, gbc.setGrid(1, 1).setFill(GridBagConstraints.BOTH).setWeight(1, 1));
-		chatPanel.add(enterMessagePanel, gbc.setGrid(1, 2).setWeight(1, 0));
-
-		JSplitPane roomSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, chatPanel, roomUsersJList);
-		roomSplitPane.setDividerLocation(420);
-		JSplitPane mainSplitpane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, roomSplitPane);
-		mainContent.add(mainSplitpane, gbc.setGrid(1, 1).setWeight(1, 1));
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				mainSplitpane.setDividerLocation(180);
-			}
-		});
+		
 
 		this.setPreferredSize(new Dimension(800, 500));
-		this.setTitle("Ứng dụng chat đăng nhập với tên " + Main.socketController.userName);
-		this.setContentPane(mainContent);
-		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.pack();
 		this.setLocationRelativeTo(null);
 		this.setVisible(true);
 	}
 
 	public void updateServerData() {
-		Main.socketController.connectedServer.connectAccountCount = Main.socketController.onlineUsers.size();
-
-		connectedServerInfoJList.setListData(new String[] { "IP: " + Main.socketController.connectedServer.ip,
-				"Port: " + Main.socketController.connectedServer.port,
-				"Số user online: " + Main.socketController.connectedServer.connectAccountCount });
 	}
 
-	public void newRoomTab(Room room) {
-		RoomMessagesPanel roomMessagesPanel = new RoomMessagesPanel(room);
-		roomMessagesPanels.add(roomMessagesPanel);
 
-		for (MessageData messageData : room.messages)
-			addNewMessageGUI(room.id, messageData);
 
-		JScrollPane messagesScrollPane = new JScrollPane(roomMessagesPanel);
-		messagesScrollPane.setMinimumSize(new Dimension(50, 100));
-		messagesScrollPane.getViewport().setBackground(Color.white);
-
-		roomTabbedPane.addTab(room.name, messagesScrollPane);
-		roomTabbedPane.setTabComponentAt(roomTabbedPane.getTabCount() - 1,
-				new TabComponent(room.name, new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						roomMessagesPanels.remove(roomMessagesPanel);
-						roomTabbedPane.remove(messagesScrollPane);
-					}
-				}));
-	}
-
-	public void updateOnlineUserJList() {
-		onlineUserJList.setListData(Main.socketController.onlineUsers.toArray(new String[0]));
-	}
 
 	public void updateRoomUsersJList() {
-		System.out.println("updateRoomUsersJList");
-		Room theChattingRoom = Room.findRoom(Main.socketController.allRooms, chattingRoom);
-		if (theChattingRoom != null)
-			roomUsersJList.setListData(theChattingRoom.users.toArray(new String[0]));
 	}
 
 	public void updateGroupJList() {
-		List<String> groupList = new ArrayList<String>();
-		for (Room room : Main.socketController.allRooms) {
-			if (room.type.equals("group"))
-				groupList.add(room.name);
-		}
-		groupJList.setListData(groupList.toArray(new String[0]));
 	}
 
 	// ************** ROOM MESSAGES ***************
 	public void addNewMessage(int roomID, String type, String whoSend, String content) {
-		MessageData messageData = new MessageData(whoSend, type, content);
-		Room receiveMessageRoom = Room.findRoom(Main.socketController.allRooms, roomID);
-		receiveMessageRoom.messages.add(messageData);
-
-		addNewMessageGUI(roomID, messageData);
+		
 	}
 
-	private void addNewMessageGUI(int roomID, MessageData messageData) {
+	private void addNewMessageGUI() {
 
-		MessagePanel newMessagePanel = new MessagePanel(messageData);
-		newMessagePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-		RoomMessagesPanel receiveMessageRoomMessagesPanel = RoomMessagesPanel.findRoomMessagesPanel(roomMessagesPanels,
-				roomID);
-		receiveMessageRoomMessagesPanel.add(Box.createHorizontalGlue());
-		receiveMessageRoomMessagesPanel.add(newMessagePanel);
-		receiveMessageRoomMessagesPanel.validate();
-		receiveMessageRoomMessagesPanel.repaint();
-		roomTabbedPane.validate();
-		roomTabbedPane.repaint();
+		
 	}
 
 	@Override
@@ -286,9 +125,8 @@ public class MainScreen extends JFrame implements ActionListener {
 		case "group": {
 			JDialog chooseUserDialog = new JDialog();
 			JPanel chooseUserContent = new JPanel(new GridBagLayout());
-			GBCBuilder gbc = new GBCBuilder(1, 1);
 
-			JList<String> onlineUserJList = new JList<String>(Main.socketController.onlineUsers.toArray(new String[0]));
+			
 			JScrollPane onlineUserScrollPanel = new JScrollPane(onlineUserJList);
 			onlineUserScrollPanel.setBorder(BorderFactory.createTitledBorder("Chọn user để thêm vào nhóm"));
 
@@ -311,18 +149,12 @@ public class MainScreen extends JFrame implements ActionListener {
 								JOptionPane.WARNING_MESSAGE);
 						return;
 					}
-					Main.socketController.createGroup(groupName, chosenUsers);
+
 					chooseUserDialog.setVisible(false);
 					chooseUserDialog.dispose();
 				}
 			});
 
-			chooseUserContent.add(onlineUserScrollPanel,
-					gbc.setSpan(2, 1).setFill(GridBagConstraints.BOTH).setWeight(1, 0));
-			chooseUserContent.add(groupNameLabel, gbc.setGrid(1, 2).setSpan(1, 1).setWeight(0, 0));
-			chooseUserContent.add(groupNameField, gbc.setGrid(2, 2).setWeight(1, 0));
-			chooseUserContent.add(createButton,
-					gbc.setGrid(1, 3).setSpan(2, 1).setWeight(0, 0).setFill(GridBagConstraints.NONE));
 
 			chooseUserDialog.setMinimumSize(new Dimension(300, 150));
 			chooseUserDialog.setContentPane(chooseUserContent);
@@ -340,7 +172,6 @@ public class MainScreen extends JFrame implements ActionListener {
 			if (content.isEmpty())
 				break;
 			if (chattingRoom != -1)
-				Main.socketController.sendTextToRoom(chattingRoom, content);
 			messageArea.setText("");
 			break;
 		}
@@ -406,7 +237,6 @@ public class MainScreen extends JFrame implements ActionListener {
 				String fileName = jfc.getSelectedFile().getName();
 				String filePath = jfc.getSelectedFile().getAbsolutePath();
 
-				Main.socketController.sendFileToRoom(chattingRoom, fileName, filePath);
 			}
 		}
 		}
@@ -454,18 +284,10 @@ public class MainScreen extends JFrame implements ActionListener {
 
 	public static class RoomMessagesPanel extends JPanel {
 		private static final long serialVersionUID = 1L;
-		public Room room;
-
-		public RoomMessagesPanel(Room room) {
-			this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-			this.setBackground(Color.white);
-			this.room = room;
-		}
+		
 
 		public static RoomMessagesPanel findRoomMessagesPanel(List<RoomMessagesPanel> roomMessagesPanelList, int id) {
 			for (RoomMessagesPanel roomMessagesPanel : roomMessagesPanelList) {
-				if (roomMessagesPanel.room.id == id)
-					return roomMessagesPanel;
 			}
 			return null;
 		}
