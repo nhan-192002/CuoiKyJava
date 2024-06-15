@@ -5,6 +5,7 @@
  */
 package com.server;
 
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -39,11 +40,30 @@ public class SocketController {
                 }
             }).start();
         } catch (Exception e) {
+            e.printStackTrace();
         }
 
     }
 
-    void CloseSocket() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void CloseSocket() {
+        try {
+            for(Client client: connectedClient)
+                client.socket.close();
+            s.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public static String getThisIP(){
+        String ip ="";
+        try {
+            Socket socket = new Socket();
+            socket.connect(new InetSocketAddress("google.com", 80));
+            ip = socket.getLocalAddress().getHostAddress();
+            socket.close();
+        } catch (Exception e) {
+            e.getStackTrace();
+        }
+        return ip;
     }
 }

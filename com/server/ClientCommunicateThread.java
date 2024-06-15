@@ -14,6 +14,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -85,6 +87,59 @@ public class ClientCommunicateThread extends Thread{
                             thisClient.sender.write("login failed");
                             thisClient.sender.newLine();
                             thisClient.sender.flush();
+                        }
+                        break;
+                    }
+                    case "get name":{
+                        thisClient.sender.write(Main.socketController.serverName);
+                        thisClient.sender.newLine();
+                        thisClient.sender.flush();
+                        break;
+                    }
+                    case "get connected count":{
+                        thisClient.sender.write(""+Main.socketController.connectedClient.size());
+                        thisClient.sender.newLine();
+                        thisClient.sender.flush();
+                        break;
+                    }
+                    case "request create room":{
+                        String roomName = thisClient.receiver.readLine();
+                        String roomType = thisClient.receiver.readLine();
+                        int userCount = Integer.parseInt(thisClient.receiver.readLine());
+                        List<String> users = new ArrayList<String>();
+                        for(int i =0; i<userCount;i++){
+                            users.add(thisClient.receiver.readLine());
+                        }
+                        Room newRoom = new Room(roomName,users);
+                        Main.socketController.allRooms.add(newRoom);
+                        
+                        for(int i=0; i< userCount; i++){
+                            BufferedWriter currentClientSender = Client.findClient(Main.socketController.connectedClient,users.get(i)).sender;
+                            currentClientSender.write("new room");
+                            currentClientSender.newLine();
+                            currentClientSender.write(""+newRoom.id);
+                            currentClientSender.newLine();
+                            currentClientSender.write(thisClient.userName);
+                            currentClientSender.newLine();
+                            if(roomType.equals("private")){
+                                // private chat thì tên room của mỗi người sẽ là tên của người kia
+                                // user 0 thì gửi 1, user 1 thì gửi 0
+                                currentClientSender.write(users.get(1-i));
+                                currentClientSender.newLine();
+                            }
+                            else{
+                                currentClientSender.write(roomName);
+                                currentClientSender.newLine();
+                            }
+                            currentClientSender.write(roomType);
+                            currentClientSender.newLine();
+                            currentClientSender.write("" + users.size());
+                            currentClientSender.newLine();
+                            for(String userr:users){
+                                currentClientSender.write(userr);
+                                currentClientSender.newLine();
+                            }
+                            currentClientSender.flush();
                         }
                         break;
                     }
