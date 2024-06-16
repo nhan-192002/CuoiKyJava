@@ -143,10 +143,59 @@ public class ClientCommunicateThread extends Thread{
                         }
                         break;
                     }
-                    
+                    case "text to room":{
+                        int roomID = Integer.parseInt(thisClient.receiver.readLine());
+                        String content ="";
+                        char c;
+                        do{
+                            c = (char) thisClient.receiver.read();
+                            if(c!='\0')
+                                content +=c;
+                        }while (c !='\0'); 
+                        Room room = Room.findRoom(Main.socketController.allRooms, roomID);
+                        for(String user: room.users){
+                            System.out.println("Send text from"+thisClient.userName+"to"+user);
+                            Client currentClient = Client.findClient(Main.socketController.connectedClient, user);
+                            if(currentClient != null){
+                                currentClient.sender.write("text from user to room");
+                                currentClient.sender.newLine();
+                                currentClient.sender.write(thisClient.userName);
+                                currentClient.sender.write(thisClient.userName);
+                                currentClient.sender.newLine();
+                                currentClient.sender.write("" + roomID);
+                                currentClient.sender.newLine();
+                                currentClient.sender.write(content);
+                                currentClient.sender.write('\0');
+                                currentClient.sender.flush();
+                            }
+                        }
+                        break;
+                    }
                 }
             }
         } catch (Exception e) {
+            //xử lý khi một client ngắt kết nối từ máy chủ
+            //kiểm tra xem socket của máy chủ có đang mở không và nếu tên người dùng của client khác rỗng thì thông báo cho các client khác rằng người dùng này đã thoát, cập nhật danh sách người dùng và đóng kết nối
+            if(Main.socketController.s.isClosed() && thisClient.userName != null){
+                try {
+                    for(Client client: Main.socketController.connectedClient){
+                        if(!client.userName.equals(thisClient.userName)){
+                            client.sender.write("user quit");
+                            client.sender.newLine();
+                            client.sender.write(thisClient.userName);
+                            client.sender.newLine();
+                            client.sender.flush();
+                        }
+                    }
+                    for(Room room: Main.socketController.allRooms)
+                        room.users.remove(thisClient.userName);
+                    thisClient.socket.close();
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+                Main.socketController.connectedClient.remove(thisClient);
+                Main.mainScreen.updateClientTable();
+            }
         }
     }
 }
