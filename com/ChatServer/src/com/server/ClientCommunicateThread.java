@@ -7,6 +7,9 @@ package com.server;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -39,9 +42,9 @@ public class ClientCommunicateThread extends Thread{
         try {
             while (true) {                
                 String header = thisClient.receiver.readLine();
-                if(header == null){
+                if(header == null)
                     throw new IOException();
-                }
+                
                 System.out.println("Header: " + header);
                 switch(header){
                     case"new login":{
@@ -160,7 +163,6 @@ public class ClientCommunicateThread extends Thread{
                                 currentClient.sender.write("text from user to room");
                                 currentClient.sender.newLine();
                                 currentClient.sender.write(thisClient.userName);
-                                currentClient.sender.write(thisClient.userName);
                                 currentClient.sender.newLine();
                                 currentClient.sender.write("" + roomID);
                                 currentClient.sender.newLine();
@@ -168,6 +170,86 @@ public class ClientCommunicateThread extends Thread{
                                 currentClient.sender.write('\0');
                                 currentClient.sender.flush();
                             }
+                        }
+                        break;
+                    }
+                    case "file to room": {
+                        int roomID = Integer.parseInt(thisClient.receiver.readLine());
+                        int roomMessagesCount = Integer.parseInt(thisClient.receiver.readLine());
+                        String fileName = thisClient.receiver.readLine();
+                        int fileSize = Integer.parseInt(thisClient.receiver.readLine());
+
+                        File filesFolder = new File("files");
+                        if (!filesFolder.exists())
+                                filesFolder.mkdir();
+
+                        int dotIndex = fileName.lastIndexOf('.');
+                        String saveFileName = "files/" + fileName.substring(0, dotIndex)
+                                        + String.format("%02d%03d", roomID, roomMessagesCount) + fileName.substring(dotIndex);
+
+                        File file = new File(saveFileName);
+                        byte[] buffer = new byte[1024];
+                        InputStream in = thisClient.socket.getInputStream();
+                        OutputStream out = new FileOutputStream(file);
+
+                        int receivedSize = 0;
+                        int count;
+                        while ((count = in.read(buffer)) > 0) {
+                                out.write(buffer, 0, count);
+                                receivedSize += count;
+                                if (receivedSize >= fileSize)
+                                        break;
+                        }
+
+                        out.close();
+
+                        Room room = Room.findRoom(Main.socketController.allRooms, roomID);
+                        for (String user : room.users) {
+                                Client currentClient = Client.findClient(Main.socketController.connectedClient, user);
+                                if (currentClient != null) {
+                                        currentClient.sender.write("file from user to room");
+                                        currentClient.sender.newLine();
+                                        currentClient.sender.write(thisClient.userName);
+                                        currentClient.sender.newLine();
+                                        currentClient.sender.write("" + roomID);
+                                        currentClient.sender.newLine();
+                                        currentClient.sender.write(fileName);
+                                        currentClient.sender.newLine();
+                                        currentClient.sender.flush();
+                                }
+                        }
+                        break;
+                    }
+                    case "request download file": {
+                        try {
+                            int roomID = Integer.parseInt(thisClient.receiver.readLine());
+                            int messageIndex = Integer.parseInt(thisClient.receiver.readLine());
+                            String fileName = thisClient.receiver.readLine();
+
+                            int dotIndex = fileName.lastIndexOf('.');
+                            fileName = "files/" + fileName.substring(0, dotIndex)
+                                            + String.format("%02d%03d", roomID, messageIndex) + fileName.substring(dotIndex);
+                            File file = new File(fileName);
+
+                            thisClient.sender.write("response download file");
+                            thisClient.sender.newLine();
+                            thisClient.sender.write("" + file.length());
+                            thisClient.sender.newLine();
+                            thisClient.sender.flush();
+
+                            byte[] buffer = new byte[1024];
+                            InputStream in = new FileInputStream(file);
+                            OutputStream out = thisClient.socket.getOutputStream();
+
+                            int count;
+                            while ((count = in.read(buffer)) > 0) {
+                                    out.write(buffer, 0, count);
+                            }
+
+                            in.close();
+                            out.flush();
+                        } catch (IOException ex) {
+                                ex.printStackTrace();
                         }
                         break;
                     }
