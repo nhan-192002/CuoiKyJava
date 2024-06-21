@@ -39,6 +39,7 @@ public class MainScreen extends JFrame implements ActionListener{
     public MainScreen(){
         JPanel mainContent = new JPanel(new GridBagLayout());
         GBCBuilder gbc = new GBCBuilder(1,1).setInsets(5);
+        JLabel ipLabel = new JLabel("IP: " + SocketController.getThisIP());
         portLabel = new JLabel("Port: ");
         portText = new JTextField();
         serverNameLabel = new JLabel("Ten server: ");
@@ -50,6 +51,7 @@ public class MainScreen extends JFrame implements ActionListener{
         clientTable.setRowHeight(25);
         JScrollPane clientScrollPane = new JScrollPane(clientTable);
         clientScrollPane.setBorder(BorderFactory.createTitledBorder("Danh sach client dang ket noi"));
+        mainContent.add(ipLabel, gbc.setFill(GridBagConstraints.BOTH).setWeight(0, 0).setSpan(1, 1));
         mainContent.add(portLabel, gbc.setGrid(2, 1).setWeight(0, 0).setSpan(1, 1));
         mainContent.add(portText,gbc.setGrid(3, 1).setWeight(1, 0));
         mainContent.add(serverNameLabel,gbc.setGrid(1, 2).setWeight(0, 0).setSpan(1, 1));
