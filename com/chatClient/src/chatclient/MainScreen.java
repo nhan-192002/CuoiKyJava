@@ -1,4 +1,4 @@
-package chatclient;
+package client;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -395,6 +395,7 @@ public class MainScreen extends JFrame implements ActionListener {
 		}
 
 		case "file": {
+//			kiểm tra xem có đang trong một phòng chat không
 			if (chattingRoom == -1)
 				break;
 			JFileChooser jfc = new JFileChooser();
@@ -405,7 +406,7 @@ public class MainScreen extends JFrame implements ActionListener {
 			if (result == JFileChooser.APPROVE_OPTION) {
 				String fileName = jfc.getSelectedFile().getName();
 				String filePath = jfc.getSelectedFile().getAbsolutePath();
-
+//				gửi file đến phòng chat hiện tại 
 				Main.socketController.sendFileToRoom(chattingRoom, fileName, filePath);
 			}
 		}

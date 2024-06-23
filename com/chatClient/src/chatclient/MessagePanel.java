@@ -1,4 +1,4 @@
-package chatclient;
+package client;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -15,7 +15,8 @@ public class MessagePanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 	public MessageData data;
-
+//các dạng tin nhắn
+	
 	public MessagePanel(MessageData data) {
 		this.data = data;
 		Dimension thisMaxSize = this.getMaximumSize();
@@ -54,7 +55,7 @@ public class MessagePanel extends JPanel {
 			} else {
 				this.setMaximumSize(new Dimension(thisMaxSize.width, 25));
 			}
-
+//			kiểm tra xem loại tin nhắn (data.type) có phải là "file" không
 		} else if (data.type.equals("file")) {
 
 			contentPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -88,7 +89,7 @@ public class MessagePanel extends JPanel {
 					}
 				}
 			});
-
+//			Hiển thị icon và tên file trên giao diện
 			JLabel fileIcon = new JLabel();
 			try {
 				String extension = data.content.split("\\.")[1];

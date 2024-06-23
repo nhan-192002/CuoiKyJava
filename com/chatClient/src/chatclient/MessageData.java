@@ -1,4 +1,4 @@
-package chatclient;
+package client;
 
 public class MessageData {
 	public String whoSend;

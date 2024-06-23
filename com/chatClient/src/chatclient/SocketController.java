@@ -1,4 +1,4 @@
-package chatclient;
+package client;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -75,6 +75,7 @@ public class SocketController {
 								break;
 							}
 							case "user quit": {
+								//lấy tên người vừa thoát
 								String whoQuit = receiver.readLine();
 								onlineUsers.remove(whoQuit);
 								Main.mainScreen.updateServerData();

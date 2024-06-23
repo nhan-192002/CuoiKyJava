@@ -1,4 +1,4 @@
-package chatclient;
+package client;
 
 import java.io.*;
 import javax.sound.sampled.*;

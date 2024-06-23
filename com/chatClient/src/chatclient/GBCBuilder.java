@@ -1,4 +1,4 @@
-package chatclient;
+package client;
 
 import java.awt.*;
 

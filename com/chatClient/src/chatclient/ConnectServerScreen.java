@@ -1,4 +1,4 @@
-package chatclient;
+package client;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -15,11 +15,15 @@ public class ConnectServerScreen extends JFrame implements ActionListener {
 	public ServerData connectedServer;
 	JTable serverTable;
 	List<ServerData> serverList;
+    // Khai báo biến để lưu trữ tên người dùng sau khi đăng nhập
+    private String loggedInUsername;
 
-	public ConnectServerScreen() {
+	public ConnectServerScreen(String username) {
+		this.loggedInUsername = username;
+		
 		GBCBuilder gbc = new GBCBuilder(1, 1);
 		JPanel connectServerContent = new JPanel(new GridBagLayout());
-
+		
 		JButton refreshButton = new JButton("Làm mới");
 		refreshButton.setActionCommand("refresh");
 		refreshButton.addActionListener(this);
@@ -86,7 +90,7 @@ public class ConnectServerScreen extends JFrame implements ActionListener {
 		connectServerContent.add(deleteButton, gbc.setGrid(2, 3));
 		connectServerContent.add(editButton, gbc.setGrid(3, 3));
 
-		this.setTitle("Ứng dụng chat");
+		this.setTitle("Ứng dụng chat của "+ username);
 		this.setContentPane(connectServerContent);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.pack();
@@ -108,46 +112,17 @@ public class ConnectServerScreen extends JFrame implements ActionListener {
 						JOptionPane.INFORMATION_MESSAGE);
 				break;
 			}
+			else {
+				String selectedIP = serverTable.getValueAt(serverTable.getSelectedRow(), 2).toString();
+				int selectedPort = Integer
+						.parseInt(serverTable.getValueAt(serverTable.getSelectedRow(), 3).toString());
+				ServerData selectedServer = serverList.stream()
+						.filter(x -> x.ip.equals(selectedIP) && x.port == selectedPort).findAny().orElse(null);
 
-			JDialog askNameDialog = new JDialog();
+				Main.socketController = new SocketController(loggedInUsername, selectedServer);
+				Main.socketController.Login();
+			}
 
-			nameText = new JTextField();
-			nameText.setPreferredSize(new Dimension(250, 30));
-			JButton joinServerButton = new JButton("Vào");
-			joinServerButton.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent arg0) {
-					if (nameText.getText().isEmpty())
-						JOptionPane.showMessageDialog(askNameDialog, "Tên không được trống", "Thông báo",
-								JOptionPane.INFORMATION_MESSAGE);
-					else {
-						String selectedIP = serverTable.getValueAt(serverTable.getSelectedRow(), 2).toString();
-						int selectedPort = Integer
-								.parseInt(serverTable.getValueAt(serverTable.getSelectedRow(), 3).toString());
-						ServerData selectedServer = serverList.stream()
-								.filter(x -> x.ip.equals(selectedIP) && x.port == selectedPort).findAny().orElse(null);
-
-						Main.socketController = new SocketController(nameText.getText(), selectedServer);
-						Main.socketController.Login();
-						// kết quả join ở loginResultAction
-						askNameDialog.setVisible(false);
-						askNameDialog.dispose();
-					}
-				}
-			});
-
-			JPanel askNameContent = new JPanel(new GridBagLayout());
-			askNameContent.add(nameText, new GBCBuilder(1, 1).setFill(GridBagConstraints.BOTH).setWeight(1, 1));
-			askNameContent.add(joinServerButton, new GBCBuilder(2, 1).setFill(GridBagConstraints.BOTH));
-
-			askNameDialog.setContentPane(askNameContent);
-			askNameDialog.setTitle("Nhập tên của bạn để vào server "
-					+ serverTable.getValueAt(serverTable.getSelectedRow(), 0).toString());
-			askNameDialog.setModalityType(JDialog.DEFAULT_MODALITY_TYPE);
-			askNameDialog.pack();
-			askNameDialog.getRootPane().setDefaultButton(joinServerButton);
-			askNameDialog.setLocationRelativeTo(null);
-			askNameDialog.setVisible(true);
 			break;
 		}
 		case "add": {
