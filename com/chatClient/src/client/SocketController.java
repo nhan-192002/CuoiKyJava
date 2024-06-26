@@ -1,5 +1,6 @@
 package client;
 
+import dao.UserDAO;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -211,6 +212,7 @@ public class SocketController {
 			sender.write(content);
 			sender.write('\0');
 			sender.flush();
+                        UserDAO.saveMessage(roomID, userName, content);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -403,23 +405,31 @@ public class SocketController {
 	}
 
 	public static int serverConnectedAccountCount(String ip, int port) {
-		try {
-			Socket s = new Socket(ip, port);
-			InputStream is = s.getInputStream();
-			BufferedReader receiver = new BufferedReader(new InputStreamReader(is));
-			OutputStream os = s.getOutputStream();
-			BufferedWriter sender = new BufferedWriter(new OutputStreamWriter(os));
+        try (Socket s = new Socket(ip, port);
+             InputStream is = s.getInputStream();
+             BufferedReader receiver = new BufferedReader(new InputStreamReader(is));
+             OutputStream os = s.getOutputStream();
+             BufferedWriter sender = new BufferedWriter(new OutputStreamWriter(os))) {
 
-			sender.write("get connected count");
-			sender.newLine();
-			sender.flush();
+            // Gửi yêu cầu đến máy chủ
+            sender.write("get connected count");
+            sender.newLine();
+            sender.flush();
 
-			int count = Integer.parseInt(receiver.readLine());
+            // Nhận phản hồi từ máy chủ
+            String response = receiver.readLine();
 
-			s.close();
-			return count;
-		} catch (IOException ex) {
-			return 0;
-		}
-	}
+            // Kiểm tra phản hồi có hợp lệ hay không và phân tích thành số nguyên
+            try {
+                return Integer.parseInt(response.trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Lỗi: Phản hồi từ máy chủ không phải là một số nguyên hợp lệ.");
+                return 0; // Hoặc giá trị đặc biệt khác để chỉ báo lỗi
+            }
+
+        } catch (IOException ex) {
+            System.out.println("Lỗi kết nối: " + ex.getMessage());
+            return 0; // Hoặc giá trị đặc biệt khác để chỉ báo lỗi
+        }
+    }
 }
